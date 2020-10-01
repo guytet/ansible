@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+import os,time,re,math
+from multiprocessing import Process
+
+from double_check import double_check
+from hosts_dict import my_dict
+
+
+""" 
+'for downed_host_key':
+ once a downed host gets into the 'downed_hosts_dict', we'd like to keep 
+ it there for 30 minutes. 'downed_host_values[1:2]', iterated by 'epoch_values'
+ represents the epoch value for when the host was considered as downed.
+
+ 'int(time(time.time)' returns the current time since-epoch. 
+  if the diff' between the two is > 1800 seconds, the host is ready to be removed 
+  from the dict, thus re-enabling alerts for its state. 
+
+'for pinged_host_name':
+ then continue to ping hosts in the imported 'my_dict' dictionary, spaced by 10
+ seconds. 
+ 'outcome=': if host does not echo back, check if it already exists in the 
+ 'downed_host_dict', if 'outcome' is false, 
+  1. add the host into 'downed_hosts_dict'
+  2. spawn a process for it, to be double checked by the next routine 'double_check()'
+"""
+
+downed_hosts_dict = { }
+
+while True:
+
+ for downed_host_key, downed_host_values in downed_hosts_dict.items():
+  for epoch_values in downed_host_values[1:2]:
+    if ( int(time.time()) - epoch_values) > 1800:
+     del downed_hosts_dict[downed_host_key]
+
+ for  pinged_host_name, pinged_host_ip in my_dict.items():
+
+  result = os.system('ping -c1 "{1}" > /dev/null 2>&1'.format(pinged_host_name, pinged_host_ip))
+  time.sleep(10)       
+  if result != 0:     				# os.sytem(ping) retruns 0 on ping success.
+   outcome = re.search(pinged_host_name, str(downed_hosts_dict))
+ 
+   if not outcome:
+     downed_hosts_dict[ pinged_host_name ] =  [ pinged_host_ip, int( time.time() ) ]
+     p = Process(target=double_check, args=(pinged_host_name, pinged_host_ip))
+     p.start()
+

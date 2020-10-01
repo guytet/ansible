@@ -1,0 +1,17 @@
+
+- name: start service
+  service:
+    name: "{{ item }}"
+    enabled: True
+    state: restarted
+    loop: "{{ services }}"
+
+#- name: daemon-reload
+#  command: "systemctl daemon-reload"
+#  when: ansible_distribution_major_version == "16"
+
+# if forcing the above is required, insert to a task:
+
+#name: trigger daemon-reload, to reduce chance of service.enable on systemd
+#   command: /bin/true
+#   notify: daemon-reload

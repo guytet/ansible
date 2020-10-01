@@ -1,0 +1,17 @@
+bootstrap_packages:
+ - python-pip
+ - python-pycurl
+ - python-psutil
+
+services:
+ - ping.monitor
+
+local_conf_dir: "conf.files.template/"
+
+script_dir: "/usr/sbin/"
+
+init_dir: "/etc/init.d/"
+
+systemd_dir: "/lib/systemd/system/"
+
+app_dir: "app.dir/"

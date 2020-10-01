@@ -1,0 +1,36 @@
+---
+
+    - name: bootstrap packages
+      apt:
+       name: "{{ item }}"
+       state: present
+      loop: "{{ bootstrap_packages }}"
+
+    - name: copy over monitor scripts
+      copy:
+       src: "{{ app_dir }}{{ item }}"
+       dest: "{{ script_dir }}"
+       owner: root
+       mode: 0715
+      loop: "{{ services }}"
+
+
+    - name: template init
+      template:
+       src: "{{ local_conf_dir }}upstart.j2"
+       dest: "{{ init_dir }}{{ item }}"
+       owner: root
+       mode: 0715
+      loop: "{{ services }}"
+      when: ansible_service_mgr == "upstart"
+
+
+    - name: template systemd
+      template:
+        src: "{{ local_conf_dir }}systemd.j2"
+        dest: "{{ systemd_dir }}{{ item }}.service"  # '.service' suffix hardcoded
+        owner: root
+        mode: 0715
+      loop: "{{ services }}"
+      when: ansible_service_mgr == "systemd"
+      notify: start service
